@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "JARVIS Inspector",
+  "version": "1.2.0",
+  "description": "Реален/Фейк детектор — невидим слой върху всяка страница",
+  "permissions": ["tabs", "activeTab", "scripting", "storage"],
+  "host_permissions": ["<all_urls>", "http://localhost:3002/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_end"
+    }
+  ],
+  "commands": {
+    "toggle-inspector": {
+      "suggested_key": {
+        "default": "Alt+J",
+        "mac": "Alt+J"
+      },
+      "description": "Toggle Jarvis Inspector"
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["*.png", "*.svg"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+node_modules/
+.env
+inspector-data/licenses.json
+*.log
+.DS_Store

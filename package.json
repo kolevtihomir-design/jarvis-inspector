@@ -1,0 +1,22 @@
+{
+  "name": "jarvis-inspector",
+  "version": "1.0.0",
+  "description": "AI-powered fake content detector — Chrome Extension + Mobile PWA + Standalone Server",
+  "type": "module",
+  "scripts": {
+    "start": "tsx inspector-server.ts",
+    "dev": "tsx watch inspector-server.ts"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.0",
+    "tsx": "^4.15.7",
+    "typescript": "^5.5.2"
+  }
+}

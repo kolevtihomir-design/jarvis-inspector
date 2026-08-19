@@ -1,0 +1,42 @@
+{
+  "name": "JARVIS Inspector",
+  "short_name": "Inspector",
+  "description": "Провери дали съдържанието е реално или фейк",
+  "start_url": "/inspector/",
+  "scope": "/inspector/",
+  "display": "standalone",
+  "background_color": "#080e1a",
+  "theme_color": "#10b981",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%23080e1a'/><ellipse cx='96' cy='96' rx='72' ry='42' fill='none' stroke='%2310b981' stroke-width='10'/><circle cx='96' cy='96' r='24' fill='%2310b981'/><circle cx='96' cy='96' r='10' fill='%23080e1a'/></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%23080e1a'/><ellipse cx='256' cy='256' rx='200' ry='120' fill='none' stroke='%2310b981' stroke-width='24'/><circle cx='256' cy='256' r='70' fill='%2310b981'/><circle cx='256' cy='256' r='30' fill='%23080e1a'/></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "share_target": {
+    "action": "/inspector/",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text":  "text",
+      "url":   "url"
+    }
+  },
+  "shortcuts": [
+    {
+      "name": "Анализирай линк",
+      "short_name": "Анализирай",
+      "url": "/inspector/",
+      "description": "Отвори инспектора"
+    }
+  ]
+}

@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#10b981">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Inspector">
+<link rel="manifest" href="/inspector/manifest.webmanifest">
+<title>JARVIS Inspector</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@600;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#080e1a;
+  --bg2:#0d1525;
+  --bg3:#111c2e;
+  --border:rgba(255,255,255,0.08);
+  --text:#c8d6e8;
+  --dim:#4e6075;
+  --em:#10b981;
+  --em-g:rgba(16,185,129,0.12);
+  --cy:#06b6d4;
+  --am:#f59e0b;
+  --re:#f43f5e;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bot:env(safe-area-inset-bottom,0px);
+}
+html{height:100%;background:var(--bg)}
+body{
+  min-height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,sans-serif;
+  font-size:15px;
+  line-height:1.5;
+  overflow-x:hidden;
+}
+
+/* ── Layout ── */
+.screen{
+  display:none;
+  flex-direction:column;
+  min-height:100dvh;
+  padding-bottom:calc(72px + var(--safe-bot));
+}
+.screen.active{display:flex}
+
+/* ── Nav ── */
+nav{
+  position:fixed;bottom:0;left:0;right:0;
+  height:calc(64px + var(--safe-bot));
+  padding-bottom:var(--safe-bot);
+  background:rgba(8,14,26,0.96);
+  border-top:1px solid var(--border);
+  backdrop-filter:blur(20px);
+  display:flex;align-items:stretch;
+  z-index:100;
+}
+.nav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:3px;
+  border:none;background:none;cursor:pointer;
+  color:var(--dim);font-size:10px;font-family:var(--mono);
+  letter-spacing:.06em;padding:8px 4px;
+  transition:color .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.nav-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.nav-btn.active{color:var(--em)}
+
+/* ── Home screen ── */
+.home-hero{
+  padding:calc(var(--safe-top) + 40px) 28px 32px;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  text-align:center;
+}
+.eye-wrap{
+  position:relative;width:80px;height:80px;
+  display:flex;align-items:center;justify-content:center;margin-bottom:8px;
+}
+.eye-ring{
+  position:absolute;inset:-8px;border-radius:50%;
+  border:1.5px solid rgba(16,185,129,.3);
+  animation:ring-pulse 3s ease-in-out infinite;
+}
+.eye-ring:nth-child(2){inset:-20px;border-color:rgba(16,185,129,.15);animation-delay:1s}
+@keyframes ring-pulse{
+  0%,100%{opacity:.5;transform:scale(1)}
+  50%{opacity:1;transform:scale(1.05)}
+}
+.eye-svg{
+  width:60px;height:60px;
+  stroke:var(--em);fill:none;stroke-width:1.5;
+  stroke-linecap:round;stroke-linejoin:round;
+  filter:drop-shadow(0 0 12px rgba(16,185,129,.5));
+}
+.home-title{
+  font-family:'Syne',sans-serif;
+  font-size:26px;font-weight:800;
+  color:#f0f6ff;letter-spacing:-.02em;
+  text-wrap:balance;
+}
+.home-sub{font-size:13px;color:var(--dim);max-width:260px}
+
+/* Input area */
+.input-wrap{
+  padding:0 20px;flex:1;
+  display:flex;flex-direction:column;gap:12px;
+}
+.url-box{
+  background:var(--bg2);
+  border:1.5px solid var(--border);
+  border-radius:16px;
+  display:flex;align-items:center;
+  overflow:hidden;
+  transition:border-color .2s;
+}
+.url-box:focus-within{border-color:rgba(16,185,129,.4)}
+#urlInput{
+  flex:1;background:none;border:none;outline:none;
+  color:#f0f6ff;font-size:14px;padding:14px 16px;
+  font-family:system-ui,sans-serif;
+}
+#urlInput::placeholder{color:var(--dim)}
+.paste-btn{
+  padding:14px 16px;background:none;border:none;cursor:pointer;
+  color:var(--dim);font-size:18px;transition:color .15s;
+  display:flex;align-items:center;
+}
+.paste-btn:active{color:var(--em)}
+
+.analyze-btn{
+  background:linear-gradient(135deg,#059669,#0891b2);
+  border:none;border-radius:16px;
+  color:white;font-family:'Syne',sans-serif;
+  font-size:17px;font-weight:800;letter-spacing:.03em;
+  padding:18px;cursor:pointer;
+  box-shadow:0 8px 32px rgba(16,185,129,.25);
+  transition:transform .1s,box-shadow .1s;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+}
+.analyze-btn:active{transform:scale(.97);box-shadow:0 4px 16px rgba(16,185,129,.15)}
+.analyze-btn.loading{background:linear-gradient(135deg,#1e40af,#7c3aed)}
+.analyze-btn svg{width:20px;height:20px;stroke:white;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.spin{animation:spin .8s linear infinite}
+@keyframes spin{100%{transform:rotate(360deg)}}
+
+/* Verdict card */
+.verdict-card{
+  margin:16px 20px 0;
+  border-radius:20px;
+  border:1.5px solid var(--border);
+  background:var(--bg2);
+  overflow:hidden;
+  animation:slide-up .3s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes slide-up{
+  from{opacity:0;transform:translateY(24px) scale(.97)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+.verdict-top{
+  padding:20px;
+  display:flex;align-items:center;gap:14px;
+  border-bottom:1px solid var(--border);
+}
+.verdict-emoji{font-size:40px;line-height:1}
+.verdict-label{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;line-height:1;color:#f0f6ff}
+.verdict-sub{font-size:12px;color:var(--dim);margin-top:3px}
+
+.vc-real    .verdict-label{color:var(--em)}
+.vc-fake    .verdict-label{color:var(--re)}
+.vc-suspicious .verdict-label{color:var(--am)}
+.vc-unknown .verdict-label{color:var(--dim)}
+
+/* Confidence */
+.conf-wrap{padding:14px 20px;border-bottom:1px solid var(--border)}
+.conf-head{
+  display:flex;justify-content:space-between;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;color:var(--dim);letter-spacing:.1em;
+  margin-bottom:8px;
+}
+.conf-bar{height:6px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden}
+.conf-fill{height:100%;border-radius:99px;transition:width .7s ease}
+.vc-real    .conf-fill{background:linear-gradient(90deg,#059669,#34d399)}
+.vc-fake    .conf-fill{background:linear-gradient(90deg,#dc2626,#f87171)}
+.vc-suspicious .conf-fill{background:linear-gradient(90deg,#d97706,#fbbf24)}
+.vc-unknown .conf-fill{background:#334155}
+
+/* Explanation + flags */
+.explanation{padding:14px 20px;font-size:13.5px;color:var(--text);line-height:1.65;border-bottom:1px solid var(--border)}
+.flags-wrap{padding:10px 20px;display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid var(--border)}
+.flag-chip{
+  font-family:'JetBrains Mono',monospace;font-size:10px;
+  background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.25);
+  color:#fca5a5;border-radius:6px;padding:3px 9px;
+}
+.card-footer{
+  padding:12px 20px;display:flex;align-items:center;justify-content:space-between;
+}
+.card-domain{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim)}
+.card-provider{
+  font-family:'JetBrains Mono',monospace;font-size:9px;
+  color:#1d4ed8;background:rgba(29,78,216,.12);
+  border:1px solid rgba(29,78,216,.25);border-radius:4px;padding:2px 7px;
+}
+
+/* ── History screen ── */
+.screen-header{
+  padding:calc(var(--safe-top) + 20px) 20px 16px;
+  font-family:'Syne',sans-serif;font-size:20px;font-weight:800;
+  color:#f0f6ff;display:flex;align-items:center;justify-content:space-between;
+}
+.clear-btn{
+  font-family:'JetBrains Mono',monospace;font-size:10px;
+  color:var(--dim);background:none;border:none;cursor:pointer;
+  padding:6px 10px;border-radius:6px;transition:color .15s;
+}
+.clear-btn:active{color:var(--re)}
+.hist-list{padding:0 16px;display:flex;flex-direction:column;gap:8px}
+.hist-item{
+  background:var(--bg2);border:1px solid var(--border);border-radius:14px;
+  padding:14px 16px;display:flex;align-items:center;gap:12px;
+  cursor:pointer;transition:background .15s;
+}
+.hist-item:active{background:var(--bg3)}
+.hist-icon{font-size:22px;flex-shrink:0}
+.hist-body{flex:1;min-width:0}
+.hist-domain{
+  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;
+}
+.hist-domain.vc-real    {color:var(--em)}
+.hist-domain.vc-fake    {color:var(--re)}
+.hist-domain.vc-suspicious{color:var(--am)}
+.hist-domain.vc-unknown {color:var(--dim)}
+.hist-title{font-size:11px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.hist-time{font-size:9px;color:#334155;font-family:'JetBrains Mono',monospace;margin-top:2px}
+.hist-pct{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--dim);flex-shrink:0}
+.hist-empty{padding:48px 20px;text-align:center;color:var(--dim);font-family:'JetBrains Mono',monospace;font-size:12px}
+
+/* ── About screen ── */
+.about-wrap{padding:calc(var(--safe-top) + 20px) 20px 20px;display:flex;flex-direction:column;gap:16px}
+.about-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:18px}
+.about-card h3{font-family:'Syne',sans-serif;font-weight:700;color:#f0f6ff;font-size:15px;margin-bottom:8px}
+.about-card p{font-size:13px;color:var(--dim);line-height:1.6}
+.about-card code{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--em);background:rgba(16,185,129,.1);padding:2px 6px;border-radius:4px}
+.status-dot{
+  display:inline-block;width:8px;height:8px;border-radius:50%;
+  margin-right:6px;vertical-align:middle;
+}
+.dot-ok{background:var(--em);box-shadow:0 0 6px var(--em)}
+.dot-err{background:var(--re);box-shadow:0 0 6px var(--re)}
+
+/* ── Shared banner ── */
+.shared-banner{
+  margin:12px 20px 0;
+  padding:12px 16px;
+  background:rgba(16,185,129,.08);
+  border:1px solid rgba(16,185,129,.2);
+  border-radius:12px;
+  font-size:12px;color:var(--em);
+  display:flex;align-items:center;gap:8px;
+}
+.shared-banner strong{color:#f0f6ff}
+</style>
+</head>
+<body>
+
+<!-- ── HOME ── -->
+<div class="screen active" id="screen-home">
+  <div class="home-hero">
+    <div class="eye-wrap">
+      <div class="eye-ring"></div>
+      <div class="eye-ring"></div>
+      <svg class="eye-svg" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+    </div>
+    <h1 class="home-title">JARVIS Inspector</h1>
+    <p class="home-sub">Постави линк и разбери — реално или фейк</p>
+  </div>
+
+  <div id="shared-notice" style="display:none" class="shared-banner">
+    <span>📤</span>
+    <span>Споделен линк: <strong id="shared-url-text"></strong></span>
+  </div>
+
+  <div class="input-wrap">
+    <div class="url-box">
+      <input type="url" id="urlInput" placeholder="https://..." autocomplete="off" autocapitalize="off" spellcheck="false">
+      <button class="paste-btn" id="pasteBtn" title="Постави от клипборда">📋</button>
+    </div>
+
+    <button class="analyze-btn" id="analyzeBtn">
+      <svg id="btn-icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <span id="btn-label">АНАЛИЗИРАЙ</span>
+    </button>
+
+    <div id="verdict-wrap"></div>
+  </div>
+</div>
+
+<!-- ── HISTORY ── -->
+<div class="screen" id="screen-hist">
+  <div class="screen-header">
+    📋 История
+    <button class="clear-btn" id="clearHistBtn">Изчисти</button>
+  </div>
+  <div class="hist-list" id="histList"></div>
+</div>
+
+<!-- ── ABOUT ── -->
+<div class="screen" id="screen-about">
+  <div class="about-wrap">
+    <div class="about-card">
+      <h3>⚡ Jarvis Inspector</h3>
+      <p>Анализира уеб страницата с помощта на AI и казва дали е реална, фейк или подозрителна. Работи с всеки линк — новини, профили, публикации.</p>
+    </div>
+    <div class="about-card">
+      <h3>🌐 Свързване</h3>
+      <p>Приложението се свързва с Jarvis сървъра на твоя компютър.</p>
+      <p style="margin-top:8px">Статус: <span id="serverStatus"><span class="status-dot dot-err"></span>Проверявам...</span></p>
+      <p style="margin-top:8px;font-size:12px">Сървър: <code id="serverUrl">—</code></p>
+    </div>
+    <div class="about-card">
+      <h3>📤 Бърза проверка</h3>
+      <p>В Chrome на Android: намери линк → задържи → <strong style="color:#f0f6ff">Сподели</strong> → избери <strong style="color:var(--em)">JARVIS Inspector</strong>. Анализира автоматично.</p>
+    </div>
+    <div class="about-card">
+      <h3>📱 Инсталиране</h3>
+      <p>Chrome → менюто (⋮) → <strong style="color:#f0f6ff">Добави към началния екран</strong>. Иконката на Inspector се появява като приложение.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── BOTTOM NAV ── -->
+<nav>
+  <button class="nav-btn active" data-screen="home" onclick="showScreen('home',this)">
+    <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+    АНАЛИЗ
+  </button>
+  <button class="nav-btn" data-screen="hist" onclick="showScreen('hist',this)">
+    <svg viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
+    ИСТОРИЯ
+  </button>
+  <button class="nav-btn" data-screen="about" onclick="showScreen('about',this)">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+    ПОМОЩ
+  </button>
+</nav>
+
+<script>
+'use strict';
+
+const HISTORY_KEY = 'jv_history_pwa';
+const MAX_HIST    = 30;
+
+// ── Screen navigation ────────────────────────────────────────────────────
+function showScreen(id, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (id === 'hist') renderHistory();
+  if (id === 'about') checkServer();
+}
+
+// ── Service worker ───────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/inspector/sw.js').catch(() => {});
+}
+
+// ── Server URL detection ─────────────────────────────────────────────────
+const SERVER = window.location.origin; // same host that served this page
+document.getElementById('serverUrl').textContent = SERVER;
+
+async function checkServer() {
+  try {
+    const r = await fetch(SERVER + '/api/health', { signal: AbortSignal.timeout(4000) });
+    const ok = r.ok;
+    document.getElementById('serverStatus').innerHTML =
+      ok ? '<span class="status-dot dot-ok"></span>Свързан ✅'
+         : '<span class="status-dot dot-err"></span>Грешка ❌';
+  } catch {
+    document.getElementById('serverStatus').innerHTML =
+      '<span class="status-dot dot-err"></span>Не отговаря ❌';
+  }
+}
+
+// ── Share Target handling ────────────────────────────────────────────────
+(function handleSharedUrl() {
+  const p = new URLSearchParams(window.location.search);
+  const raw = p.get('url') || p.get('text') || p.get('title') || '';
+  const shared = raw.match(/https?:\/\/[^\s]+/)?.[0] || '';
+  if (!shared) return;
+
+  const input = document.getElementById('urlInput');
+  input.value = shared;
+
+  const notice = document.getElementById('shared-notice');
+  const urlText = document.getElementById('shared-url-text');
+  try { urlText.textContent = new URL(shared).hostname; } catch { urlText.textContent = shared.slice(0,40); }
+  notice.style.display = 'flex';
+
+  // Auto-analyze after short delay (let page render first)
+  setTimeout(() => analyze(shared), 600);
+})();
+
+// ── Paste button ─────────────────────────────────────────────────────────
+document.getElementById('pasteBtn').addEventListener('click', async () => {
+  try {
+    const text = await navigator.clipboard.readText();
+    const url  = text.match(/https?:\/\/[^\s]+/)?.[0];
+    if (url) document.getElementById('urlInput').value = url;
+  } catch {
+    /* clipboard blocked — user can type manually */
+  }
+});
+
+// ── Analyze ──────────────────────────────────────────────────────────────
+document.getElementById('analyzeBtn').addEventListener('click', () => {
+  const url = document.getElementById('urlInput').value.trim();
+  if (!url) { document.getElementById('urlInput').focus(); return; }
+  analyze(url);
+});
+
+document.getElementById('urlInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const url = e.target.value.trim();
+    if (url) analyze(url);
+  }
+});
+
+async function analyze(url) {
+  const btn   = document.getElementById('analyzeBtn');
+  const icon  = document.getElementById('btn-icon');
+  const label = document.getElementById('btn-label');
+  const wrap  = document.getElementById('verdict-wrap');
+
+  // Loading state
+  btn.classList.add('loading');
+  icon.innerHTML = '<path d="M21 12a9 9 0 1 1-9-9" stroke-dasharray="40" stroke-dashoffset="10"/>';
+  icon.firstElementChild.classList.add('spin');
+  label.textContent = 'Анализирам...';
+  wrap.innerHTML = '';
+
+  let domain = '';
+  let title  = '';
+  try { const u = new URL(url); domain = u.hostname; } catch {}
+
+  // Detect social platform
+  const SOCIAL = {
+    'instagram.com':'Instagram','tiktok.com':'TikTok','twitter.com':'Twitter/X',
+    'x.com':'Twitter/X','facebook.com':'Facebook','youtube.com':'YouTube','linkedin.com':'LinkedIn'
+  };
+  const socialPlatform = Object.entries(SOCIAL).find(([d]) => domain.includes(d))?.[1] || null;
+  const socialMode = socialPlatform ? (domain.includes('youtube') ? 'video' : 'profile') : null;
+
+  try {
+    const licenseKey = localStorage.getItem('jv_license_key') || '';
+    const res = await fetch(SERVER + '/api/inspect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, domain, title, selectedText:'', socialMode, socialPlatform, licenseKey }),
+      signal: AbortSignal.timeout(30000),
+    });
+
+    const data = await res.json();
+
+    if (res.status === 429) {
+      // Limit reached — show upgrade screen
+      const used  = data.used  ?? 10;
+      const limit = data.limit ?? 10;
+      wrap.innerHTML = `
+        <div class="verdict-card vc-unknown" style="padding:22px;text-align:center">
+          <div style="font-size:36px;margin-bottom:10px">🔒</div>
+          <div style="color:#f59e0b;font-family:monospace;font-weight:700;font-size:15px;margin-bottom:8px">Дневен лимит достигнат</div>
+          <div style="color:#94a3b8;font-size:12px;line-height:1.6;margin-bottom:14px">
+            Използвал си <strong style="color:#f59e0b">${used}/${limit}</strong> безплатни анализа.<br>Надгради до PRO за неограничени.
+          </div>
+          <a href="https://jarvis-inspector.lemonsqueezy.com" target="_blank"
+             style="display:block;background:linear-gradient(135deg,#059669,#0891b2);color:#fff;text-decoration:none;padding:12px;border-radius:10px;font-weight:700;font-size:13px;margin-bottom:14px">
+            ⚡ Надгради до PRO — €4.99/мо
+          </a>
+          <div style="color:#334155;font-size:10px;margin-bottom:8px">или въведи лиценз ключ</div>
+          <div style="display:flex;gap:8px">
+            <input id="pwa-license-input" type="text" placeholder="JARVIS-XXXX-XXXX-XXXX"
+              value="${licenseKey}"
+              style="flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#e2e8f0;font-size:12px;padding:9px 12px;outline:none;font-family:monospace" />
+            <button id="pwa-license-save"
+              style="background:rgba(16,185,129,.2);border:1px solid rgba(16,185,129,.3);color:#34d399;border-radius:8px;padding:0 14px;font-size:16px;cursor:pointer">
+              ✓
+            </button>
+          </div>
+          <div id="pwa-license-msg" style="font-size:11px;font-family:monospace;margin-top:6px"></div>
+        </div>`;
+      attachPwaLicenseListener();
+      return;
+    }
+
+    if (!res.ok) throw new Error(`HTTP ${res.status} — сървърът не отговори правилно`);
+    renderResult(data, url, domain);
+    saveHistory({ url, domain, title:domain, verdict:data.verdict, confidence:data.confidence, ts:Date.now() });
+
+  } catch (err) {
+    wrap.innerHTML = `
+      <div class="verdict-card vc-unknown" style="padding:20px">
+        <div style="color:#f87171;font-family:monospace;font-size:13px">❌ ${err.message}</div>
+        <div style="color:#334155;font-size:11px;margin-top:8px">Увери се, че Jarvis сървърът е стартиран и телефонът е на същата WiFi мрежа.</div>
+      </div>`;
+  } finally {
+    btn.classList.remove('loading');
+    icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+    label.textContent = 'АНАЛИЗИРАЙ';
+  }
+}
+
+function renderResult(data, url, domain) {
+  const { verdict='unknown', confidence=0, explanation='', flags=[], provider='', model='' } = data;
+  const meta = {
+    real:       { emoji:'✅', label:'РЕАЛНО',       sub:'Съдържанието изглежда достоверно' },
+    fake:       { emoji:'❌', label:'ФЕЙК',          sub:'Вероятно невярно или манипулирано' },
+    suspicious: { emoji:'⚠️', label:'ПОДОЗРИТЕЛНО', sub:'Провери допълнителни източници' },
+    unknown:    { emoji:'🔍', label:'НЕЯСНО',        sub:'Недостатъчна информация' },
+  };
+  const m = meta[verdict] || meta.unknown;
+  const pct = Math.min(100, Math.max(0, Number(confidence)));
+  const flagsHtml = flags.length
+    ? `<div class="flags-wrap">${flags.map(f=>`<span class="flag-chip">${f}</span>`).join('')}</div>` : '';
+  const provHtml  = provider ? `<span class="card-provider">${provider}${model?' / '+model.split('/').pop()?.slice(0,14):''}</span>` : '';
+  const domainSafe = domain || (()=>{ try{return new URL(url).hostname}catch{return url.slice(0,30)} })();
+
+  document.getElementById('verdict-wrap').innerHTML = `
+    <div class="verdict-card vc-${verdict}">
+      <div class="verdict-top">
+        <span class="verdict-emoji">${m.emoji}</span>
+        <div>
+          <div class="verdict-label">${m.label}</div>
+          <div class="verdict-sub">${m.sub}</div>
+        </div>
+      </div>
+      <div class="conf-wrap">
+        <div class="conf-head"><span>УВЕРЕНОСТ</span><span>${pct}%</span></div>
+        <div class="conf-bar"><div class="conf-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="explanation">${explanation}</div>
+      ${flagsHtml}
+      <div class="card-footer">
+        <span class="card-domain">🌐 ${domainSafe}</span>
+        ${provHtml}
+      </div>
+    </div>`;
+}
+
+// ── History ──────────────────────────────────────────────────────────────
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; }
+}
+function saveHistory(entry) {
+  const h = loadHistory();
+  h.unshift(entry);
+  if (h.length > MAX_HIST) h.length = MAX_HIST;
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(h));
+}
+
+function attachPwaLicenseListener() {
+  document.getElementById('pwa-license-save')?.addEventListener('click', async () => {
+    const key = document.getElementById('pwa-license-input')?.value?.trim();
+    const msgEl = document.getElementById('pwa-license-msg');
+    if (!key) return;
+    if (msgEl) msgEl.textContent = 'Проверявам...';
+    try {
+      const r = await fetch(SERVER + '/api/verify-license', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ licenseKey: key }),
+      });
+      const d = await r.json();
+      if (d.valid) {
+        localStorage.setItem('jv_license_key', key);
+        if (msgEl) { msgEl.style.color = '#34d399'; msgEl.textContent = `✅ Активиран! План: ${d.plan}. Анализирай отново.`; }
+      } else {
+        if (msgEl) { msgEl.style.color = '#f87171'; msgEl.textContent = `❌ ${d.error || 'Невалиден ключ'}`; }
+      }
+    } catch (err) {
+      if (msgEl) { msgEl.style.color = '#f87171'; msgEl.textContent = `❌ ${err.message}`; }
+    }
+  });
+}
+
+function renderHistory() {
+  const hist = loadHistory();
+  const icons = { real:'✅', fake:'❌', suspicious:'⚠️', unknown:'🔍' };
+  const list  = document.getElementById('histList');
+  if (!hist.length) {
+    list.innerHTML = '<div class="hist-empty">Няма записани анализи</div>';
+    return;
+  }
+  list.innerHTML = hist.map(h => `
+    <div class="hist-item" onclick="window.open('${encodeURI(h.url)}','_blank')">
+      <span class="hist-icon">${icons[h.verdict]||'🔍'}</span>
+      <div class="hist-body">
+        <div class="hist-domain vc-${h.verdict}">${h.domain||'?'}</div>
+        <div class="hist-title">${(h.title||h.url||'').slice(0,52)}</div>
+        <div class="hist-time">${new Date(h.ts).toLocaleString('bg-BG',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>
+      </div>
+      <span class="hist-pct">${h.confidence??'?'}%</span>
+    </div>`).join('');
+}
+
+document.getElementById('clearHistBtn').addEventListener('click', () => {
+  localStorage.removeItem(HISTORY_KEY);
+  renderHistory();
+});
+</script>
+</body>
+</html>
