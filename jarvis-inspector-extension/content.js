@@ -1,6 +1,19 @@
-// content.js v1.1 — Jarvis Inspector
+// content.js v1.2 — Jarvis Inspector
 // Features: floating button, analysis panel, text highlighting,
-//           history tab, social media mode, Alt+J toggle
+//           history tab, social media mode, Alt+J toggle, PRO / Lemon Squeezy
+
+const INSPECTOR_SERVER = "http://localhost:3002";
+
+// Fetch checkout URL dynamically from server (uses LS_STORE_URL from .env)
+async function getCheckoutUrl(plan = "pro") {
+  try {
+    const r = await fetch(`${INSPECTOR_SERVER}/api/checkout`);
+    const d = await r.json();
+    return d[plan] || d.store || "https://jarvis-inspector.lemonsqueezy.com";
+  } catch (_) {
+    return "https://jarvis-inspector.lemonsqueezy.com";
+  }
+}
 
 (function () {
   "use strict";
@@ -297,7 +310,7 @@
           <div class="jv-limit-icon">🔒</div>
           <div class="jv-limit-title">Дневен лимит достигнат</div>
           <div class="jv-limit-sub">Използвал си <strong>${used}/${limit}</strong> безплатни анализа за днес.<br>Надгради до PRO за неограничени.</div>
-          <a class="jv-upgrade-btn" href="https://jarvis-inspector.lemonsqueezy.com" target="_blank">⚡ Надгради до PRO — €4.99/мо</a>
+          <a class="jv-upgrade-btn" id="jv-upgrade-link-limit" href="#" target="_blank">⚡ Надгради до PRO — €4.99/мо</a>
           <div class="jv-limit-or">или въведи лиценз ключ</div>
           <div class="jv-license-row">
             <input class="jv-license-input" id="jv-license-input" type="text" placeholder="JARVIS-XXXX-XXXX-XXXX" />
@@ -331,7 +344,7 @@
             <div class="jv-pro-row">✅ Пълна история</div>
             <div class="jv-pro-row">✅ Приоритетен AI модел</div>
           </div>
-          <a class="jv-upgrade-btn" href="https://jarvis-inspector.lemonsqueezy.com" target="_blank">Купи PRO — €4.99/мо →</a>
+          <a class="jv-upgrade-btn" id="jv-upgrade-link-pro" href="#" target="_blank">Купи PRO — €4.99/мо →</a>
           <div class="jv-pro-sep">Лиценз ключ</div>
           <div class="jv-license-row">
             <input class="jv-license-input" id="jv-license-input" type="text"
@@ -348,6 +361,14 @@
   }
 
   function attachLicenseListeners() {
+    // Load dynamic checkout URL from server
+    getCheckoutUrl("pro").then(url => {
+      ["jv-upgrade-link-limit", "jv-upgrade-link-pro"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.href = url;
+      });
+    });
+
     document.getElementById("jv-license-save")?.addEventListener("click", async () => {
       const input = document.getElementById("jv-license-input");
       const key = input?.value?.trim();

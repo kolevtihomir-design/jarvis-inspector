@@ -4,6 +4,7 @@
 // Порт: 3002  |  npm run inspector (или Start-Inspector.bat)
 // ═══════════════════════════════════════════════════════════════════════════
 import "dotenv/config";
+import crypto from "crypto";
 import express from "express";
 import fs from "fs";
 import os from "os";
@@ -14,7 +15,29 @@ const PORT   = Number(process.env.INSPECTOR_PORT || 3002);
 const app    = express();
 const __dir  = process.cwd();
 
+// ── Lemon Squeezy config ──────────────────────────────────────────────────
+const LS_API_KEY         = process.env.LEMON_SQUEEZY_API_KEY || "";
+const LS_WEBHOOK_SECRET  = process.env.LEMON_SQUEEZY_WEBHOOK_SECRET || "";
+const LS_STORE_URL       = process.env.LEMON_SQUEEZY_STORE_URL || "https://jarvis-inspector.lemonsqueezy.com";
+const LS_VARIANTS: Record<string, string> = {
+  pro:      process.env.LS_VARIANT_PRO      || "",
+  creator:  process.env.LS_VARIANT_CREATOR  || "",
+  business: process.env.LS_VARIANT_BUSINESS || "",
+};
+
+function lsCheckoutUrl(plan: "pro" | "creator" | "business"): string {
+  const variantId = LS_VARIANTS[plan];
+  if (variantId) return `${LS_STORE_URL}/checkout/buy/${variantId}`;
+  return `${LS_STORE_URL}`; // fallback to store homepage
+}
+
 app.use(cors()); // Chrome extension изисква CORS
+
+// ── Webhook raw body (трябва ПРЕДИ express.json) ──────────────────────────
+app.use("/api/webhooks/lemon-squeezy",
+  express.raw({ type: "application/json" })
+);
+
 app.use(express.json({ limit: "10mb" }));
 
 // ── Serve PWA ────────────────────────────────────────────────────────────
@@ -144,6 +167,75 @@ async function callLLM(messages: any[]): Promise<{ text: string; provider: strin
   }
   throw new Error("Всички AI доставчици са недостъпни. Провери API ключовете в .env");
 }
+
+// ── /api/checkout — returns Lemon Squeezy checkout URLs ──────────────────
+app.get("/api/checkout", (_req, res) => {
+  res.json({
+    pro:      lsCheckoutUrl("pro"),
+    creator:  lsCheckoutUrl("creator"),
+    business: lsCheckoutUrl("business"),
+    store:    LS_STORE_URL,
+  });
+});
+
+// ── /api/webhooks/lemon-squeezy — automatic license activation ────────────
+// Lemon Squeezy sends POST here on every subscription event.
+// Set this URL in LS dashboard → Settings → Webhooks:
+//   http://YOUR_IP:3002/api/webhooks/lemon-squeezy
+app.post("/api/webhooks/lemon-squeezy", (req, res) => {
+  // 1. Verify signature
+  const sig  = req.headers["x-signature"] as string;
+  const body = req.body as Buffer;
+
+  if (LS_WEBHOOK_SECRET && sig) {
+    const hmac    = crypto.createHmac("sha256", LS_WEBHOOK_SECRET);
+    const digest  = hmac.update(body).digest("hex");
+    if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(digest))) {
+      console.warn("[WEBHOOK] Invalid signature — rejected");
+      return res.status(401).json({ error: "invalid signature" });
+    }
+  }
+
+  // 2. Parse payload
+  let payload: any;
+  try { payload = JSON.parse(body.toString()); }
+  catch (_) { return res.status(400).json({ error: "invalid json" }); }
+
+  const event    = payload?.meta?.event_name as string;
+  const email    = payload?.data?.attributes?.user_email as string || "";
+  const status   = payload?.data?.attributes?.status as string || "";
+  const lsKey    = payload?.data?.attributes?.license_key?.key as string || "";
+  const planName = (payload?.data?.attributes?.variant_name as string || "").toLowerCase();
+  const plan     = planName.includes("creator") ? "creator"
+                 : planName.includes("business") ? "business"
+                 : "pro";
+
+  console.log(`[WEBHOOK] ${event} | ${email} | plan:${plan} | status:${status}`);
+
+  // 3. Act on event
+  if (["subscription_created", "subscription_activated", "order_created"].includes(event)) {
+    // Find or generate a license key for this subscription
+    const activationKey = lsKey || `JARVIS-${crypto.randomBytes(4).toString("hex").toUpperCase()}-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
+    saveLicense(activationKey, {
+      valid: true, plan, email,
+      activatedAt: new Date().toISOString(),
+    });
+    console.log(`[WEBHOOK] Activated license ${activationKey} for ${email}`);
+  }
+
+  if (["subscription_cancelled", "subscription_expired", "subscription_paused"].includes(event)) {
+    if (lsKey) {
+      const all = loadLicenses();
+      if (all[lsKey]) {
+        all[lsKey].valid = false;
+        fs.writeFileSync(LICENSES_FILE, JSON.stringify(all, null, 2), "utf-8");
+        console.log(`[WEBHOOK] Deactivated license ${lsKey} for ${email}`);
+      }
+    }
+  }
+
+  res.json({ received: true });
+});
 
 // ── /api/local-access ────────────────────────────────────────────────────
 app.get("/api/local-access", (_, res) => {
