@@ -185,9 +185,13 @@ async function callOpenRouter(messages: any[]): Promise<string> {
 }
 
 async function callGemini(messages: any[]): Promise<string> {
-  // Поддържа GEMINI_API_KEY (предпочитано) и GOOGLE_API_KEY (legacy)
-  const key = (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "").trim();
-  if (!key || key.startsWith("AQ.")) throw new Error("no_gemini_key"); // AQ. = невалиден формат
+  // Поддържа GEMINI_API_KEYS (pool) → GEMINI_API_KEY → GOOGLE_API_KEY (legacy)
+  const poolEnv = (process.env.GEMINI_API_KEYS || "").trim();
+  const singleKey = (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "").trim();
+  const geminiKeys = poolEnv
+    ? poolEnv.split(",").map(k => k.trim()).filter(k => k && !k.startsWith("AQ."))
+    : singleKey && !singleKey.startsWith("AQ.") ? [singleKey] : [];
+  if (!geminiKeys.length) throw new Error("no_gemini_key"); // няма валиден AIzaSy... ключ
   // Convert to Gemini format
   const system = messages.find((m: any) => m.role === "system")?.content || "";
   const userMsg = messages.find((m: any) => m.role === "user");
@@ -209,31 +213,39 @@ async function callGemini(messages: any[]): Promise<string> {
     }
   }
 
-  // Опитваме gemini-flash-latest, fallback → gemini-2.0-flash-exp → gemini-1.5-flash
-  const GEMINI_MODELS = ["gemini-flash-latest", "gemini-2.0-flash-exp", "gemini-1.5-flash"];
-  for (const model of GEMINI_MODELS) {
-    try {
-      const r = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ role: "user", parts }],
-            generationConfig: { temperature: 0.2, maxOutputTokens: 512 },
-          }),
-          signal: AbortSignal.timeout(25_000),
+  // Loops: всеки ключ × всеки модел — при 429 се преминава на следващ ключ
+  // ПОТВЪРДЕНО 15.08.2026: gemini-2.0-flash, gemini-1.5-flash → 404 за нови users.
+  // gemini-flash-latest е единственият работещ alias (сочи към текущия Flash production).
+  const GEMINI_MODELS = ["gemini-flash-latest", "gemini-2.0-flash-lite", "gemini-1.5-flash-8b"];
+  for (const apiKey of geminiKeys) {
+    for (const model of GEMINI_MODELS) {
+      try {
+        const r = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ role: "user", parts }],
+              generationConfig: { temperature: 0.2, maxOutputTokens: 512 },
+            }),
+            signal: AbortSignal.timeout(25_000),
+          }
+        );
+        if (!r.ok) {
+          if (r.status === 429) { console.warn(`[GEMINI] key#${geminiKeys.indexOf(apiKey)} quota → next key`); break; }
+          throw new Error(`gemini_${r.status}`);
         }
-      );
-      if (!r.ok) throw new Error(`gemini_${r.status}`);
-      const d = await r.json() as any;
-      return d.candidates[0].content.parts[0].text;
-    } catch (e: any) {
-      console.warn(`[GEMINI] ${model} failed: ${e.message}`);
-      if (model === GEMINI_MODELS[GEMINI_MODELS.length - 1]) throw e;
+        const d = await r.json() as any;
+        return d.candidates[0].content.parts[0].text;
+      } catch (e: any) {
+        const isLast = model === GEMINI_MODELS[GEMINI_MODELS.length - 1] && apiKey === geminiKeys[geminiKeys.length - 1];
+        console.warn(`[GEMINI] key#${geminiKeys.indexOf(apiKey)} ${model}: ${e.message}`);
+        if (isLast) throw e;
+      }
     }
   }
-  throw new Error("gemini_all_models_failed");
+  throw new Error("gemini_all_keys_failed");
 }
 
 async function callLLM(messages: any[], requiresVision = false): Promise<{ text: string; provider: string; model: string }> {
