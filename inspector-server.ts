@@ -421,6 +421,19 @@ app.post("/api/verify-license", async (req, res) => {
   }
 });
 
+// ── Language helpers ──────────────────────────────────────────────────────
+const LANG_NAMES: Record<string, string> = {
+  bg: "Bulgarian", en: "English", de: "German", fr: "French",
+  es: "Spanish",  it: "Italian", ro: "Romanian", ru: "Russian",
+  tr: "Turkish",  pl: "Polish",  nl: "Dutch",    pt: "Portuguese",
+  ar: "Arabic",   uk: "Ukrainian", sr: "Serbian", hr: "Croatian",
+  cs: "Czech",    sk: "Slovak",  hu: "Hungarian", el: "Greek",
+};
+function langName(code: string): string {
+  const base = (code || "en").split("-")[0].toLowerCase();
+  return LANG_NAMES[base] || "English";
+}
+
 // ── /api/inspect ─────────────────────────────────────────────────────────
 app.post("/api/inspect", async (req, res) => {
   try {
@@ -428,8 +441,10 @@ app.post("/api/inspect", async (req, res) => {
       url, title, domain, selectedText, description,
       author, published, ogType,
       socialMode, socialPlatform,
-      licenseKey, image
+      licenseKey, image, screenshot, lang
     } = req.body;
+
+    const responseLanguage = langName(lang || "en");
 
     // Rate limiting
     const ip  = clientIP(req);
@@ -442,8 +457,8 @@ app.post("/api/inspect", async (req, res) => {
           error: "limit_reached",
           used:  count,
           limit: FREE_DAILY_LIMIT,
-          message: `Дневен лимит от ${FREE_DAILY_LIMIT} анализа достигнат. Надгради до PRO.`,
-          upgradeUrl: "https://jarvis-inspector.lemonsqueezy.com",
+          message: `Daily limit of ${FREE_DAILY_LIMIT} analyses reached. Upgrade to PRO.`,
+          upgradeUrl: LS_STORE_URL,
         });
       }
       incUsage(ip);
@@ -452,37 +467,38 @@ app.post("/api/inspect", async (req, res) => {
     // Build context
     const ctx = [
       `URL: ${url}`,
-      `Заглавие: ${title || "(без заглавие)"}`,
-      `Домейн: ${domain}`,
-      description    ? `Описание: ${description}` : "",
-      author         ? `Автор: ${author}` : "",
-      published      ? `Публикувано: ${published}` : "",
-      ogType         ? `Тип: ${ogType}` : "",
-      selectedText   ? `Текст: "${selectedText}"` : "",
-      socialPlatform ? `Платформа: ${socialPlatform} (режим: ${socialMode})` : "",
+      `Title: ${title || "(no title)"}`,
+      `Domain: ${domain}`,
+      description    ? `Description: ${description}` : "",
+      author         ? `Author: ${author}` : "",
+      published      ? `Published: ${published}` : "",
+      ogType         ? `Type: ${ogType}` : "",
+      selectedText   ? `Text: "${selectedText}"` : "",
+      socialPlatform ? `Platform: ${socialPlatform} (mode: ${socialMode})` : "",
     ].filter(Boolean).join("\n");
 
     const isSocial = !!socialMode;
     const system = isSocial
-      ? `Ти си Jarvis Inspector — AI анализатор на социални медии.
-Проверяваш профили и публикации за автентичност, фалшиви последователи, scam акаунти.
-Ако ти е подадена снимка (скрийншот), анализирай визуално за съмнителни елементи (AI генерирано, монтажи).
-ВАЖНО: Отговаряш САМО валиден JSON без markdown.
-Формат: {"verdict":"real"|"fake"|"suspicious"|"unknown","confidence":0-100,"explanation":"2-3 изречения на български","flags":["проблеми"],"suspicious_phrases":["фрази от текста"]}`
-      : `Ти си Jarvis Inspector — AI детектор за дезинформация и фейк съдържание.
-Анализираш уеб страници и казваш дали съдържанието е реално, фейк или подозрително.
-Ако ти е подадена снимка (скрийншот), анализирай я за следи от AI генерация или манипулация.
-ВАЖНО: Отговаряш САМО валиден JSON без markdown.
-Формат: {"verdict":"real"|"fake"|"suspicious"|"unknown","confidence":0-100,"explanation":"2-3 изречения на български","flags":["конкретни проблеми"],"suspicious_phrases":["точни фрази от текста — максимум 5, до 5 думи всяка"]}`;
+      ? `You are Jarvis Inspector — an AI analyzer for social media.
+You check profiles and posts for authenticity, fake followers, and scam accounts.
+If a screenshot is provided, analyze it visually for suspicious elements (AI-generated images, montages).
+IMPORTANT: Respond ONLY with valid JSON, no markdown. Write the "explanation" field in ${responseLanguage}.
+Format: {"verdict":"real"|"fake"|"suspicious"|"unknown","confidence":0-100,"explanation":"2-3 sentences in ${responseLanguage}","flags":["issues"],"suspicious_phrases":["phrases from text"]}`
+      : `You are Jarvis Inspector — an AI detector for misinformation and fake content.
+You analyze web pages and determine if the content is real, fake, or suspicious.
+If a screenshot is provided, analyze it for signs of AI generation or manipulation.
+IMPORTANT: Respond ONLY with valid JSON, no markdown. Write the "explanation" field in ${responseLanguage}.
+Format: {"verdict":"real"|"fake"|"suspicious"|"unknown","confidence":0-100,"explanation":"2-3 sentences in ${responseLanguage}","flags":["specific issues"],"suspicious_phrases":["exact phrases — max 5, up to 5 words each"]}`;
 
     let userContent: any = `Анализирай:\n\n${ctx}`;
     let requiresVision = false;
 
-    if (image) {
+    const imageData = image || screenshot || null;
+    if (imageData) {
       requiresVision = true;
       userContent = [
-        { type: "text", text: `Анализирай следното съдържание и предоставената снимка (скрийншот):\n\n${ctx}` },
-        { type: "image_url", image_url: { url: image } }
+        { type: "text", text: `Analyze the following content and the provided screenshot:\n\n${ctx}` },
+        { type: "image_url", image_url: { url: imageData } }
       ];
     }
 

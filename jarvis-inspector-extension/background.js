@@ -40,7 +40,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     // Read license key from storage, attach to payload
     chrome.storage.local.get(LICENSE_KEY, (stored) => {
       const licenseKey = stored[LICENSE_KEY] || "";
-      const payload = { ...msg.payload, licenseKey };
+      const lang = (navigator.language || "en").split("-")[0].toLowerCase();
+      const payload = { ...msg.payload, licenseKey, lang };
 
       fetch(`${JARVIS_URL}/api/inspect`, {
         method: "POST",

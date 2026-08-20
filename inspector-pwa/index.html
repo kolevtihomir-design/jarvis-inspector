@@ -355,6 +355,200 @@ nav{
 const HISTORY_KEY = 'jv_history_pwa';
 const MAX_HIST    = 30;
 
+// ── i18n ─────────────────────────────────────────────────────────────────
+const USER_LANG = (navigator.language || 'en').split('-')[0].toLowerCase();
+const T = {
+  bg: {
+    title:'JARVIS Inspector', sub:'Постави линк и разбери — реално или фейк',
+    placeholder:'https://...', paste:'Постави от клипборда',
+    analyze:'АНАЛИЗИРАЙ', analyzing:'Анализирам...', history:'ИСТОРИЯ',
+    help:'ПОМОЩ', analyze_nav:'АНАЛИЗ',
+    hist_title:'📋 История', hist_clear:'Изчисти', hist_empty:'Няма записани анализи',
+    shared:'Споделен линк:',
+    verdicts:{ real:'РЕАЛНО', fake:'ФЕЙК', suspicious:'ПОДОЗРИТЕЛНО', unknown:'НЕЯСНО' },
+    subs:{ real:'Съдържанието изглежда достоверно', fake:'Вероятно невярно или манипулирано',
+           suspicious:'Провери допълнителни източници', unknown:'Недостатъчна информация' },
+    confidence:'УВЕРЕНОСТ',
+    limit_title:'Дневен лимит достигнат', limit_msg:'Използвал си', limit_of:'от',
+    limit_analyses:'анализа.', upgrade:'⚡ Надгради до PRO',
+    or_key:'или въведи лиценз ключ', activated:'✅ Активиран! План:', invalid_key:'❌ Невалиден ключ',
+    checking:'Проверявам...',
+    about_title:'⚡ Jarvis Inspector', about_desc:'Анализира уеб страницата с AI и казва дали е реална, фейк или подозрителна.',
+    status_title:'🌐 Статус', connected:'Свързан ✅', error:'Грешка ❌', offline:'Не отговаря ❌', checking_srv:'Проверявам...',
+    server_lbl:'Сървър:', share_title:'📤 Бърза проверка',
+    share_desc:'Chrome Android → намери линк → задържи → Сподели → JARVIS Inspector.',
+    install_title:'📱 Инсталиране', install_desc:'Chrome → менюто (⋮) → Добави към началния екран.',
+  },
+  en: {
+    title:'JARVIS Inspector', sub:'Paste a link and find out — real or fake',
+    placeholder:'https://...', paste:'Paste from clipboard',
+    analyze:'ANALYZE', analyzing:'Analyzing...', history:'HISTORY',
+    help:'HELP', analyze_nav:'ANALYZE',
+    hist_title:'📋 History', hist_clear:'Clear', hist_empty:'No saved analyses',
+    shared:'Shared link:',
+    verdicts:{ real:'REAL', fake:'FAKE', suspicious:'SUSPICIOUS', unknown:'UNKNOWN' },
+    subs:{ real:'Content appears credible', fake:'Likely false or manipulated',
+           suspicious:'Check additional sources', unknown:'Insufficient information' },
+    confidence:'CONFIDENCE',
+    limit_title:'Daily limit reached', limit_msg:'You used', limit_of:'of',
+    limit_analyses:'analyses.', upgrade:'⚡ Upgrade to PRO',
+    or_key:'or enter a license key', activated:'✅ Activated! Plan:', invalid_key:'❌ Invalid key',
+    checking:'Checking...',
+    about_title:'⚡ Jarvis Inspector', about_desc:'Analyzes web pages with AI and tells you if content is real, fake or suspicious.',
+    status_title:'🌐 Status', connected:'Connected ✅', error:'Error ❌', offline:'Not responding ❌', checking_srv:'Checking...',
+    server_lbl:'Server:', share_title:'📤 Quick check',
+    share_desc:'Chrome Android → hold a link → Share → JARVIS Inspector. Auto-analyzes.',
+    install_title:'📱 Install', install_desc:'Chrome → menu (⋮) → Add to home screen.',
+  },
+  de: {
+    title:'JARVIS Inspector', sub:'Link einfügen und prüfen — echt oder Fake',
+    placeholder:'https://...', paste:'Aus Zwischenablage einfügen',
+    analyze:'ANALYSIEREN', analyzing:'Analysiere...', history:'VERLAUF',
+    help:'HILFE', analyze_nav:'ANALYSE',
+    hist_title:'📋 Verlauf', hist_clear:'Löschen', hist_empty:'Keine gespeicherten Analysen',
+    shared:'Geteilter Link:',
+    verdicts:{ real:'ECHT', fake:'FAKE', suspicious:'VERDÄCHTIG', unknown:'UNBEKANNT' },
+    subs:{ real:'Inhalt erscheint glaubwürdig', fake:'Wahrscheinlich falsch oder manipuliert',
+           suspicious:'Weitere Quellen prüfen', unknown:'Unzureichende Informationen' },
+    confidence:'SICHERHEIT',
+    limit_title:'Tageslimit erreicht', limit_msg:'Du hast', limit_of:'von',
+    limit_analyses:'Analysen verwendet.', upgrade:'⚡ Auf PRO upgraden',
+    or_key:'oder Lizenzschlüssel eingeben', activated:'✅ Aktiviert! Plan:', invalid_key:'❌ Ungültiger Schlüssel',
+    checking:'Prüfe...',
+    about_title:'⚡ Jarvis Inspector', about_desc:'Analysiert Webseiten mit KI und sagt, ob der Inhalt echt, gefälscht oder verdächtig ist.',
+    status_title:'🌐 Status', connected:'Verbunden ✅', error:'Fehler ❌', offline:'Antwortet nicht ❌', checking_srv:'Prüfe...',
+    server_lbl:'Server:', share_title:'📤 Schnellprüfung',
+    share_desc:'Chrome Android → Link gedrückt halten → Teilen → JARVIS Inspector.',
+    install_title:'📱 Installation', install_desc:'Chrome → Menü (⋮) → Zum Startbildschirm hinzufügen.',
+  },
+  fr: {
+    title:'JARVIS Inspector', sub:'Collez un lien et découvrez — réel ou faux',
+    placeholder:'https://...', paste:'Coller depuis le presse-papiers',
+    analyze:'ANALYSER', analyzing:'Analyse en cours...', history:'HISTORIQUE',
+    help:'AIDE', analyze_nav:'ANALYSE',
+    hist_title:'📋 Historique', hist_clear:'Effacer', hist_empty:'Aucune analyse enregistrée',
+    shared:'Lien partagé:',
+    verdicts:{ real:'RÉEL', fake:'FAUX', suspicious:'SUSPECT', unknown:'INCONNU' },
+    subs:{ real:'Le contenu semble crédible', fake:'Probablement faux ou manipulé',
+           suspicious:'Vérifier des sources supplémentaires', unknown:'Informations insuffisantes' },
+    confidence:'CONFIANCE',
+    limit_title:'Limite quotidienne atteinte', limit_msg:'Vous avez utilisé', limit_of:'sur',
+    limit_analyses:'analyses.', upgrade:'⚡ Passer à PRO',
+    or_key:"ou entrez une clé de licence", activated:'✅ Activé ! Plan:', invalid_key:'❌ Clé invalide',
+    checking:'Vérification...',
+    about_title:'⚡ Jarvis Inspector', about_desc:"Analyse les pages web avec l'IA et indique si le contenu est réel, faux ou suspect.",
+    status_title:'🌐 Statut', connected:'Connecté ✅', error:'Erreur ❌', offline:'Ne répond pas ❌', checking_srv:'Vérification...',
+    server_lbl:'Serveur:', share_title:'📤 Vérification rapide',
+    share_desc:'Chrome Android → maintenir un lien → Partager → JARVIS Inspector.',
+    install_title:'📱 Installation', install_desc:"Chrome → menu (⋮) → Ajouter à l'écran d'accueil.",
+  },
+  es: {
+    title:'JARVIS Inspector', sub:'Pega un enlace y descubre — real o falso',
+    placeholder:'https://...', paste:'Pegar desde portapapeles',
+    analyze:'ANALIZAR', analyzing:'Analizando...', history:'HISTORIAL',
+    help:'AYUDA', analyze_nav:'ANÁLISIS',
+    hist_title:'📋 Historial', hist_clear:'Limpiar', hist_empty:'No hay análisis guardados',
+    shared:'Enlace compartido:',
+    verdicts:{ real:'REAL', fake:'FALSO', suspicious:'SOSPECHOSO', unknown:'DESCONOCIDO' },
+    subs:{ real:'El contenido parece creíble', fake:'Probablemente falso o manipulado',
+           suspicious:'Verifica fuentes adicionales', unknown:'Información insuficiente' },
+    confidence:'CONFIANZA',
+    limit_title:'Límite diario alcanzado', limit_msg:'Has usado', limit_of:'de',
+    limit_analyses:'análisis.', upgrade:'⚡ Actualizar a PRO',
+    or_key:'o ingresa una clave de licencia', activated:'✅ ¡Activado! Plan:', invalid_key:'❌ Clave inválida',
+    checking:'Verificando...',
+    about_title:'⚡ Jarvis Inspector', about_desc:'Analiza páginas web con IA y dice si el contenido es real, falso o sospechoso.',
+    status_title:'🌐 Estado', connected:'Conectado ✅', error:'Error ❌', offline:'No responde ❌', checking_srv:'Verificando...',
+    server_lbl:'Servidor:', share_title:'📤 Verificación rápida',
+    share_desc:'Chrome Android → mantén un enlace → Compartir → JARVIS Inspector.',
+    install_title:'📱 Instalación', install_desc:'Chrome → menú (⋮) → Añadir a pantalla de inicio.',
+  },
+  ro: {
+    title:'JARVIS Inspector', sub:'Lipește un link și află — real sau fals',
+    placeholder:'https://...', paste:'Lipește din clipboard',
+    analyze:'ANALIZEAZĂ', analyzing:'Analizez...', history:'ISTORIC',
+    help:'AJUTOR', analyze_nav:'ANALIZĂ',
+    hist_title:'📋 Istoric', hist_clear:'Șterge', hist_empty:'Nu există analize salvate',
+    shared:'Link partajat:',
+    verdicts:{ real:'REAL', fake:'FALS', suspicious:'SUSPECT', unknown:'NECUNOSCUT' },
+    subs:{ real:'Conținutul pare credibil', fake:'Probabil fals sau manipulat',
+           suspicious:'Verifică surse suplimentare', unknown:'Informații insuficiente' },
+    confidence:'ÎNCREDERE',
+    limit_title:'Limita zilnică atinsă', limit_msg:'Ai folosit', limit_of:'din',
+    limit_analyses:'analize.', upgrade:'⚡ Upgrade la PRO',
+    or_key:'sau introdu o cheie de licență', activated:'✅ Activat! Plan:', invalid_key:'❌ Cheie invalidă',
+    checking:'Verificare...',
+    about_title:'⚡ Jarvis Inspector', about_desc:'Analizează paginile web cu AI și spune dacă conținutul este real, fals sau suspect.',
+    status_title:'🌐 Status', connected:'Conectat ✅', error:'Eroare ❌', offline:'Nu răspunde ❌', checking_srv:'Verificare...',
+    server_lbl:'Server:', share_title:'📤 Verificare rapidă',
+    share_desc:'Chrome Android → ține apăsat un link → Distribuie → JARVIS Inspector.',
+    install_title:'📱 Instalare', install_desc:'Chrome → meniu (⋮) → Adaugă pe ecranul de start.',
+  },
+  ru: {
+    title:'JARVIS Inspector', sub:'Вставьте ссылку и узнайте — реально или фейк',
+    placeholder:'https://...', paste:'Вставить из буфера',
+    analyze:'АНАЛИЗИРОВАТЬ', analyzing:'Анализирую...', history:'ИСТОРИЯ',
+    help:'ПОМОЩЬ', analyze_nav:'АНАЛИЗ',
+    hist_title:'📋 История', hist_clear:'Очистить', hist_empty:'Нет сохранённых анализов',
+    shared:'Общая ссылка:',
+    verdicts:{ real:'РЕАЛЬНО', fake:'ФЕЙК', suspicious:'ПОДОЗРИТЕЛЬНО', unknown:'НЕИЗВЕСТНО' },
+    subs:{ real:'Контент выглядит достоверно', fake:'Вероятно ложный или манипулированный',
+           suspicious:'Проверьте дополнительные источники', unknown:'Недостаточно информации' },
+    confidence:'УВЕРЕННОСТЬ',
+    limit_title:'Дневной лимит достигнут', limit_msg:'Использовано', limit_of:'из',
+    limit_analyses:'анализов.', upgrade:'⚡ Перейти на PRO',
+    or_key:'или введите лицензионный ключ', activated:'✅ Активирован! План:', invalid_key:'❌ Неверный ключ',
+    checking:'Проверяю...',
+    about_title:'⚡ Jarvis Inspector', about_desc:'Анализирует веб-страницы с помощью AI и говорит, является ли контент реальным, фейком или подозрительным.',
+    status_title:'🌐 Статус', connected:'Подключено ✅', error:'Ошибка ❌', offline:'Не отвечает ❌', checking_srv:'Проверяю...',
+    server_lbl:'Сервер:', share_title:'📤 Быстрая проверка',
+    share_desc:'Chrome Android → удержите ссылку → Поделиться → JARVIS Inspector.',
+    install_title:'📱 Установка', install_desc:'Chrome → меню (⋮) → Добавить на главный экран.',
+  },
+  tr: {
+    title:'JARVIS Inspector', sub:'Bağlantıyı yapıştır ve öğren — gerçek mi yoksa sahte mi',
+    placeholder:'https://...', paste:'Panodan yapıştır',
+    analyze:'ANALİZ ET', analyzing:'Analiz ediliyor...', history:'GEÇMİŞ',
+    help:'YARDIM', analyze_nav:'ANALİZ',
+    hist_title:'📋 Geçmiş', hist_clear:'Temizle', hist_empty:'Kayıtlı analiz yok',
+    shared:'Paylaşılan bağlantı:',
+    verdicts:{ real:'GERÇEK', fake:'SAHTE', suspicious:'ŞÜPHELİ', unknown:'BİLİNMEYEN' },
+    subs:{ real:'İçerik güvenilir görünüyor', fake:'Muhtemelen yanlış veya manipüle edilmiş',
+           suspicious:'Ek kaynakları kontrol edin', unknown:'Yetersiz bilgi' },
+    confidence:'GÜVENİLİRLİK',
+    limit_title:'Günlük limit doldu', limit_msg:'Kullandınız', limit_of:'/',
+    limit_analyses:'analiz.', upgrade:'⚡ PRO\'ya yükselt',
+    or_key:'veya lisans anahtarı girin', activated:'✅ Etkinleştirildi! Plan:', invalid_key:'❌ Geçersiz anahtar',
+    checking:'Kontrol ediliyor...',
+    about_title:'⚡ Jarvis Inspector', about_desc:'Web sayfalarını AI ile analiz eder ve içeriğin gerçek, sahte veya şüpheli olduğunu söyler.',
+    status_title:'🌐 Durum', connected:'Bağlandı ✅', error:'Hata ❌', offline:'Yanıt vermiyor ❌', checking_srv:'Kontrol...',
+    server_lbl:'Sunucu:', share_title:'📤 Hızlı kontrol',
+    share_desc:'Chrome Android → bağlantıyı basılı tut → Paylaş → JARVIS Inspector.',
+    install_title:'📱 Kurulum', install_desc:"Chrome → menü (⋮) → Ana ekrana ekle.",
+  },
+};
+// Fallback to English for unsupported languages
+const t = T[USER_LANG] || T.en;
+
+// Apply translations to static UI elements
+document.title = t.title;
+document.querySelector('.home-title').textContent = t.title;
+document.querySelector('.home-sub').textContent   = t.sub;
+document.getElementById('urlInput').placeholder   = t.placeholder;
+document.getElementById('pasteBtn').title         = t.paste;
+document.getElementById('btn-label').textContent  = t.analyze;
+document.querySelector('[data-screen="home"]').lastChild.textContent = t.analyze_nav;
+document.querySelector('[data-screen="hist"]').lastChild.textContent = t.history;
+document.querySelector('[data-screen="about"]').lastChild.textContent = t.help;
+document.querySelector('.screen-header').firstChild.textContent = t.hist_title + ' ';
+document.getElementById('clearHistBtn').textContent = t.hist_clear;
+// About screen
+const aboutCards = document.querySelectorAll('.about-card');
+if (aboutCards[0]) { aboutCards[0].querySelector('h3').textContent = t.about_title; aboutCards[0].querySelector('p').textContent = t.about_desc; }
+if (aboutCards[1]) { aboutCards[1].querySelector('h3').textContent = t.status_title; }
+if (aboutCards[2]) { aboutCards[2].querySelector('h3').textContent = t.share_title; aboutCards[2].querySelector('p').textContent = t.share_desc; }
+if (aboutCards[3]) { aboutCards[3].querySelector('h3').textContent = t.install_title; aboutCards[3].querySelector('p').textContent = t.install_desc; }
+
 // ── Screen navigation ────────────────────────────────────────────────────
 function showScreen(id, btn) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -371,7 +565,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ── Server URL detection ─────────────────────────────────────────────────
-const SERVER = window.location.origin; // same host that served this page
+const SERVER = window.location.origin;
 document.getElementById('serverUrl').textContent = SERVER;
 
 async function checkServer() {
@@ -379,11 +573,11 @@ async function checkServer() {
     const r = await fetch(SERVER + '/api/health', { signal: AbortSignal.timeout(4000) });
     const ok = r.ok;
     document.getElementById('serverStatus').innerHTML =
-      ok ? '<span class="status-dot dot-ok"></span>Свързан ✅'
-         : '<span class="status-dot dot-err"></span>Грешка ❌';
+      ok ? `<span class="status-dot dot-ok"></span>${t.connected}`
+         : `<span class="status-dot dot-err"></span>${t.error}`;
   } catch {
     document.getElementById('serverStatus').innerHTML =
-      '<span class="status-dot dot-err"></span>Не отговаря ❌';
+      `<span class="status-dot dot-err"></span>${t.offline}`;
   }
 }
 
@@ -441,7 +635,7 @@ async function analyze(url) {
   btn.classList.add('loading');
   icon.innerHTML = '<path d="M21 12a9 9 0 1 1-9-9" stroke-dasharray="40" stroke-dashoffset="10"/>';
   icon.firstElementChild.classList.add('spin');
-  label.textContent = 'Анализирам...';
+  label.textContent = t.analyzing;
   wrap.innerHTML = '';
 
   let domain = '';
@@ -461,28 +655,27 @@ async function analyze(url) {
     const res = await fetch(SERVER + '/api/inspect', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, domain, title, selectedText:'', socialMode, socialPlatform, licenseKey }),
+      body: JSON.stringify({ url, domain, title, selectedText:'', socialMode, socialPlatform, licenseKey, lang: USER_LANG }),
       signal: AbortSignal.timeout(30000),
     });
 
     const data = await res.json();
 
     if (res.status === 429) {
-      // Limit reached — show upgrade screen
       const used  = data.used  ?? 10;
       const limit = data.limit ?? 10;
       wrap.innerHTML = `
         <div class="verdict-card vc-unknown" style="padding:22px;text-align:center">
           <div style="font-size:36px;margin-bottom:10px">🔒</div>
-          <div style="color:#f59e0b;font-family:monospace;font-weight:700;font-size:15px;margin-bottom:8px">Дневен лимит достигнат</div>
+          <div style="color:#f59e0b;font-family:monospace;font-weight:700;font-size:15px;margin-bottom:8px">${t.limit_title}</div>
           <div style="color:#94a3b8;font-size:12px;line-height:1.6;margin-bottom:14px">
-            Използвал си <strong style="color:#f59e0b">${used}/${limit}</strong> безплатни анализа.<br>Надгради до PRO за неограничени.
+            ${t.limit_msg} <strong style="color:#f59e0b">${used}${t.limit_of}${limit}</strong> ${t.limit_analyses}
           </div>
           <a href="https://jarvis-inspector.lemonsqueezy.com" target="_blank"
              style="display:block;background:linear-gradient(135deg,#059669,#0891b2);color:#fff;text-decoration:none;padding:12px;border-radius:10px;font-weight:700;font-size:13px;margin-bottom:14px">
-            ⚡ Надгради до PRO — €4.99/мо
+            ${t.upgrade} — €4.99/mo
           </a>
-          <div style="color:#334155;font-size:10px;margin-bottom:8px">или въведи лиценз ключ</div>
+          <div style="color:#334155;font-size:10px;margin-bottom:8px">${t.or_key}</div>
           <div style="display:flex;gap:8px">
             <input id="pwa-license-input" type="text" placeholder="JARVIS-XXXX-XXXX-XXXX"
               value="${licenseKey}"
@@ -517,13 +710,10 @@ async function analyze(url) {
 
 function renderResult(data, url, domain) {
   const { verdict='unknown', confidence=0, explanation='', flags=[], provider='', model='' } = data;
-  const meta = {
-    real:       { emoji:'✅', label:'РЕАЛНО',       sub:'Съдържанието изглежда достоверно' },
-    fake:       { emoji:'❌', label:'ФЕЙК',          sub:'Вероятно невярно или манипулирано' },
-    suspicious: { emoji:'⚠️', label:'ПОДОЗРИТЕЛНО', sub:'Провери допълнителни източници' },
-    unknown:    { emoji:'🔍', label:'НЕЯСНО',        sub:'Недостатъчна информация' },
-  };
-  const m = meta[verdict] || meta.unknown;
+  const emojis = { real:'✅', fake:'❌', suspicious:'⚠️', unknown:'🔍' };
+  const label  = t.verdicts[verdict]  || t.verdicts.unknown;
+  const sub    = t.subs[verdict]      || t.subs.unknown;
+  const emoji  = emojis[verdict]      || '🔍';
   const pct = Math.min(100, Math.max(0, Number(confidence)));
   const flagsHtml = flags.length
     ? `<div class="flags-wrap">${flags.map(f=>`<span class="flag-chip">${f}</span>`).join('')}</div>` : '';
@@ -533,14 +723,14 @@ function renderResult(data, url, domain) {
   document.getElementById('verdict-wrap').innerHTML = `
     <div class="verdict-card vc-${verdict}">
       <div class="verdict-top">
-        <span class="verdict-emoji">${m.emoji}</span>
+        <span class="verdict-emoji">${emoji}</span>
         <div>
-          <div class="verdict-label">${m.label}</div>
-          <div class="verdict-sub">${m.sub}</div>
+          <div class="verdict-label">${label}</div>
+          <div class="verdict-sub">${sub}</div>
         </div>
       </div>
       <div class="conf-wrap">
-        <div class="conf-head"><span>УВЕРЕНОСТ</span><span>${pct}%</span></div>
+        <div class="conf-head"><span>${t.confidence}</span><span>${pct}%</span></div>
         <div class="conf-bar"><div class="conf-fill" style="width:${pct}%"></div></div>
       </div>
       <div class="explanation">${explanation}</div>
@@ -568,7 +758,7 @@ function attachPwaLicenseListener() {
     const key = document.getElementById('pwa-license-input')?.value?.trim();
     const msgEl = document.getElementById('pwa-license-msg');
     if (!key) return;
-    if (msgEl) msgEl.textContent = 'Проверявам...';
+    if (msgEl) msgEl.textContent = t.checking;
     try {
       const r = await fetch(SERVER + '/api/verify-license', {
         method: 'POST',
@@ -593,7 +783,7 @@ function renderHistory() {
   const icons = { real:'✅', fake:'❌', suspicious:'⚠️', unknown:'🔍' };
   const list  = document.getElementById('histList');
   if (!hist.length) {
-    list.innerHTML = '<div class="hist-empty">Няма записани анализи</div>';
+    list.innerHTML = `<div class="hist-empty">${t.hist_empty}</div>`;
     return;
   }
   list.innerHTML = hist.map(h => `
@@ -602,7 +792,7 @@ function renderHistory() {
       <div class="hist-body">
         <div class="hist-domain vc-${h.verdict}">${h.domain||'?'}</div>
         <div class="hist-title">${(h.title||h.url||'').slice(0,52)}</div>
-        <div class="hist-time">${new Date(h.ts).toLocaleString('bg-BG',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>
+        <div class="hist-time">${new Date(h.ts).toLocaleString(navigator.language,{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>
       </div>
       <span class="hist-pct">${h.confidence??'?'}%</span>
     </div>`).join('');
