@@ -49,7 +49,7 @@ app.get("/", (_, res) => res.redirect("/inspector"));
 
 // ── Freemium ──────────────────────────────────────────────────────────────
 const FREE_DAILY_LIMIT = 10;
-const DATA_DIR         = path.join(__dir, "inspector-data");
+const DATA_DIR         = process.env.VERCEL ? "/tmp/inspector-data" : path.join(__dir, "inspector-data");
 const LICENSES_FILE    = path.join(DATA_DIR, "licenses.json");
 const LEMON_API        = "https://api.lemonsqueezy.com/v1/licenses";
 
@@ -104,7 +104,7 @@ function saveLicense(key: string, data: LicenseRecord) {
   all[key] = data;
   cachedLicenses = all;
   lastLicenseCheck = Date.now();
-  fs.writeFileSync(LICENSES_FILE, JSON.stringify(all, null, 2), "utf-8");
+  try { fs.writeFileSync(LICENSES_FILE, JSON.stringify(all, null, 2), "utf-8"); } catch (_) {}
 }
 
 function checkPro(licenseKey: string): boolean {

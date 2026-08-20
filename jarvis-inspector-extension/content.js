@@ -2,7 +2,7 @@
 // Features: floating button, analysis panel, text highlighting,
 //           history tab, social media mode, Alt+J toggle, PRO / Lemon Squeezy
 
-const INSPECTOR_SERVER = "http://localhost:3002";
+const INSPECTOR_SERVER = "https://smartpause-inspector-api.vercel.app"; // Production
 
 // Fetch checkout URL dynamically from server (uses LS_STORE_URL from .env)
 async function getCheckoutUrl(plan = "pro") {
@@ -439,7 +439,7 @@ async function getCheckoutUrl(plan = "pro") {
       if (msgEl) msgEl.textContent = "Проверявам...";
 
       try {
-        const r = await fetch("http://localhost:3002/api/verify-license", {
+        const r = await fetch(`${INSPECTOR_SERVER}/api/verify-license`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ licenseKey: key }),
@@ -521,7 +521,7 @@ async function getCheckoutUrl(plan = "pro") {
         // Update usage display after successful analysis
         chrome.storage.local.get("jv_license_key", (s) => {
           const lk = s["jv_license_key"] || "";
-          fetch("http://localhost:3002/api/usage", lk ? { headers: { "x-license-key": lk } } : undefined)
+          fetch(`${INSPECTOR_SERVER}/api/usage`, lk ? { headers: { "x-license-key": lk } } : undefined)
             .then(r => r.json())
             .then(u => {
               if (!u.isPro && u.limit) {
