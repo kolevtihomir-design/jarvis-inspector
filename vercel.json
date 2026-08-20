@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "inspector-server.ts",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["inspector-pwa/**", "inspector-data/**"]
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/",
+      "dest": "/inspector-pwa/index.html"
+    },
+    {
+      "src": "/inspector/?",
+      "dest": "/inspector-pwa/index.html"
+    },
+    {
+      "src": "/inspector/(.*)",
+      "dest": "/inspector-pwa/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "inspector-server.ts"
+    }
+  ]
+}

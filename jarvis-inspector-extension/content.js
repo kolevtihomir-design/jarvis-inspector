@@ -173,7 +173,35 @@ async function getCheckoutUrl(plan = "pro") {
     attachTabListeners();
   }
 
-  function showResult(data) {
+  function buildConsoleLog(data, screenshotDataUrl) {
+    const ts = new Date().toLocaleTimeString("bg-BG", { hour:"2-digit", minute:"2-digit", second:"2-digit" });
+    const { verdict, confidence, flags = [], suspicious_phrases = [], provider, model } = data;
+    const lines = [];
+    lines.push(`<span class="jv-console-head">▶ JARVIS INSPECTOR — ДЪЛБОК АНАЛИЗ</span>`);
+    lines.push(`<span class="jv-console-info">  TS: ${ts}  |  URL: ${window.location.hostname}</span>`);
+    lines.push(`<span class="jv-console-info">  PROVIDER: ${provider || "?"} / ${(model||"?").split("/").pop()?.slice(0,24)}</span>`);
+    lines.push(``);
+    const verdictClass = verdict === "real" ? "jv-console-ok" : verdict === "fake" ? "jv-console-err" : "jv-console-warn";
+    lines.push(`<span class="${verdictClass}">  VERDICT: ${(verdict||"unknown").toUpperCase()}  (${confidence}% увереност)</span>`);
+    if (flags.length) {
+      lines.push(`<span class="jv-console-warn">  FLAGS [${flags.length}]:</span>`);
+      flags.forEach(f => lines.push(`<span class="jv-console-warn">    • ${f}</span>`));
+    } else {
+      lines.push(`<span class="jv-console-ok">  FLAGS: none</span>`);
+    }
+    if (suspicious_phrases.length) {
+      lines.push(`<span class="jv-console-err">  SUSPICIOUS PHRASES [${suspicious_phrases.length}]:</span>`);
+      suspicious_phrases.slice(0,5).forEach(p => lines.push(`<span class="jv-console-err">    ↳ "${p}"</span>`));
+    }
+    lines.push(``);
+    lines.push(`<span class="jv-console-info">  DOM: ${document.querySelectorAll("*").length} елемента</span>`);
+    lines.push(`<span class="jv-console-info">  SCRIPTS: ${document.scripts.length}  |  IFRAMES: ${document.querySelectorAll("iframe").length}</span>`);
+    lines.push(`<span class="jv-console-info">  SCREENSHOT: ${screenshotDataUrl ? "✓ заснета" : "✗ не е налична"}</span>`);
+    lines.push(`<span class="${verdict === "real" ? "jv-console-ok" : "jv-console-err"}">▶ АНАЛИЗ ЗАВЪРШЕН</span>`);
+    return lines.map(l => `<span class="jv-console-line">${l}</span>`).join("\n");
+  }
+
+  function showResult(data, screenshotDataUrl) {
     const { verdict = "unknown", confidence = 0, explanation = "",
             flags = [], suspicious_phrases = [], provider = "", model = "" } = data;
 
@@ -195,6 +223,19 @@ async function getCheckoutUrl(plan = "pro") {
       ? `<div class="jv-hl-badge">🖊️ ${hlCount} фраз${hlCount === 1 ? "а" : "и"} маркирани в страницата</div>`
       : "";
 
+    // Screenshot thumbnail
+    const screenshotHtml = screenshotDataUrl ? `
+      <div class="jv-screenshot-wrap" id="jv-scr-wrap" title="Кликни за пълен размер">
+        <img src="${screenshotDataUrl}" alt="Screenshot" />
+        <span class="jv-screenshot-badge">📸 СНИМКА НА ЕКРАНА</span>
+        <span class="jv-screenshot-verdict">${m.icon}</span>
+      </div>` : "";
+
+    // Deep console
+    const consoleHtml = `
+      <div class="jv-console-toggle" id="jv-console-toggle">▶ КОНЗОЛА / ДЪЛБОК АНАЛИЗ</div>
+      <div class="jv-console" id="jv-console" style="display:none">${buildConsoleLog(data, screenshotDataUrl)}</div>`;
+
     panel.innerHTML = `
       <div class="jv-inner">
         <div class="jv-header">
@@ -202,6 +243,7 @@ async function getCheckoutUrl(plan = "pro") {
           <button class="jv-close-btn" id="jv-close">✕</button>
         </div>
         ${renderTabs("result")}
+        ${screenshotHtml}
         <div class="jv-verdict jv-verdict-${verdict}">
           <span class="jv-verdict-icon">${m.icon}</span>
           <div>
@@ -218,6 +260,7 @@ async function getCheckoutUrl(plan = "pro") {
         <div class="jv-explanation">${explanation}</div>
         ${flagsHtml}
         ${hlBadge}
+        ${consoleHtml}
         <div class="jv-footer">
           <span class="jv-domain">🌐 ${window.location.hostname}</span>
           ${provider ? `<span class="jv-provider">${provider}${model ? " / " + model.split("/").pop()?.slice(0,18) : ""}</span>` : ""}
@@ -226,6 +269,25 @@ async function getCheckoutUrl(plan = "pro") {
       </div>`;
 
     attachTabListeners();
+
+    // Console toggle
+    document.getElementById("jv-console-toggle")?.addEventListener("click", () => {
+      const c = document.getElementById("jv-console");
+      const t = document.getElementById("jv-console-toggle");
+      if (!c) return;
+      const visible = c.style.display !== "none";
+      c.style.display = visible ? "none" : "block";
+      if (t) t.textContent = (visible ? "▶" : "▼") + " КОНЗОЛА / ДЪЛБОК АНАЛИЗ";
+    });
+
+    // Screenshot → open full size
+    document.getElementById("jv-scr-wrap")?.addEventListener("click", () => {
+      if (screenshotDataUrl) {
+        const w = window.open();
+        w.document.write(`<html><body style="margin:0;background:#000"><img src="${screenshotDataUrl}" style="max-width:100%;display:block"/></body></html>`);
+      }
+    });
+
     document.getElementById("jv-clear-hl")?.addEventListener("click", () => {
       clearHighlights();
       document.getElementById("jv-clear-hl")?.remove();
@@ -447,7 +509,7 @@ async function getCheckoutUrl(plan = "pro") {
         description, author, published, ogType,
         socialMode:  socialMeta?.mode || null,
         socialPlatform: socialMeta?.name || null,
-        screenshot:  (selectedText.length < 50 && !socialMeta) ? screenshot : null,
+        screenshot,  // ВИНАГИ изпращаме снимката
       };
 
       const resp = await chrome.runtime.sendMessage({ type: "ANALYZE", payload });
@@ -455,7 +517,7 @@ async function getCheckoutUrl(plan = "pro") {
       if (resp?.error === "limit_reached") showLimitReached(resp.limitData);
       else if (resp?.error) showError(resp.error);
       else if (resp?.data) {
-        showResult(resp.data);
+        showResult(resp.data, screenshot);  // предаваме снимката за показване
         // Update usage display after successful analysis
         chrome.storage.local.get("jv_license_key", (s) => {
           const lk = s["jv_license_key"] || "";

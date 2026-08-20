@@ -28,9 +28,11 @@
 #jv-btn:active { transform: scale(.96) !important; }
 
 @keyframes jv-pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(16,185,129,.7), 0 4px 24px rgba(0,0,0,.5); }
-  60%  { box-shadow: 0 0 0 14px rgba(16,185,129,0), 0 4px 24px rgba(0,0,0,.5); }
-  100% { box-shadow: 0 0 0 0 rgba(16,185,129,0), 0 4px 24px rgba(0,0,0,.5); }
+  0%   { box-shadow: 0 0 0 0 rgba(16,185,129,.9), 0 4px 24px rgba(0,0,0,.5); transform: scale(1); }
+  40%  { box-shadow: 0 0 0 18px rgba(16,185,129,0), 0 4px 24px rgba(0,0,0,.5); transform: scale(1.08); }
+  60%  { transform: scale(1); }
+  80%  { box-shadow: 0 0 0 8px rgba(16,185,129,.4), 0 4px 24px rgba(0,0,0,.5); transform: scale(1.04); }
+  100% { box-shadow: 0 0 0 0 rgba(16,185,129,0), 0 4px 24px rgba(0,0,0,.5); transform: scale(1); }
 }
 #jv-btn svg {
   width: 22px !important; height: 22px !important;
@@ -81,7 +83,7 @@ mark.jv-hl-real {
 #jv-panel {
   position: fixed !important;
   bottom: 90px !important; right: 24px !important;
-  width: 320px !important;
+  width: 360px !important;
   max-width: calc(100vw - 48px) !important;
   z-index: 2147483647 !important;
   border-radius: 16px !important;
@@ -330,6 +332,54 @@ mark.jv-hl-real {
 .jv-license-msg { font-size: 10px !important; font-family: monospace !important; }
 .jv-license-ok { color: #34d399 !important; }
 .jv-license-err { color: #f87171 !important; }
+
+/* ── Screenshot thumbnail ── */
+.jv-screenshot-wrap {
+  position: relative !important; margin: 0 12px 8px !important;
+  border-radius: 8px !important; overflow: hidden !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+  cursor: pointer !important;
+}
+.jv-screenshot-wrap img {
+  width: 100% !important; height: 140px !important;
+  object-fit: cover !important; object-position: top !important;
+  display: block !important; filter: brightness(.85) !important;
+  transition: filter .2s !important;
+}
+.jv-screenshot-wrap:hover img { filter: brightness(1) !important; }
+.jv-screenshot-badge {
+  position: absolute !important; top: 6px !important; left: 6px !important;
+  background: rgba(0,0,0,.75) !important; color: #94a3b8 !important;
+  font-size: 9px !important; font-family: monospace !important;
+  padding: 2px 6px !important; border-radius: 4px !important;
+  letter-spacing: .05em !important;
+}
+.jv-screenshot-verdict {
+  position: absolute !important; bottom: 6px !important; right: 6px !important;
+  font-size: 22px !important; filter: drop-shadow(0 2px 4px rgba(0,0,0,.8)) !important;
+}
+
+/* ── Deep console ── */
+.jv-console {
+  margin: 8px 12px 0 !important; background: rgba(0,0,0,.5) !important;
+  border: 1px solid rgba(255,255,255,.07) !important; border-radius: 8px !important;
+  padding: 8px 10px !important; font-family: monospace !important;
+  font-size: 10px !important; color: #64748b !important; max-height: 120px !important;
+  overflow-y: auto !important; line-height: 1.6 !important;
+}
+.jv-console-line { display: block !important; }
+.jv-console-ok   { color: #34d399 !important; }
+.jv-console-warn { color: #fbbf24 !important; }
+.jv-console-err  { color: #f87171 !important; }
+.jv-console-info { color: #60a5fa !important; }
+.jv-console-head { color: #a78bfa !important; font-weight: bold !important; }
+.jv-console-toggle {
+  margin: 4px 12px 0 !important; font-size: 9px !important;
+  color: #334155 !important; cursor: pointer !important;
+  font-family: monospace !important; letter-spacing: .04em !important;
+  user-select: none !important;
+}
+.jv-console-toggle:hover { color: #475569 !important; }
 
 /* ── PRO screen ── */
 .jv-pro-inner {

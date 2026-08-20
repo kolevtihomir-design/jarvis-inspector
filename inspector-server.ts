@@ -45,6 +45,7 @@ const pwaPath = path.join(__dir, "inspector-pwa");
 app.use("/inspector", express.static(pwaPath));
 app.get("/inspector",  (_, res) => res.sendFile(path.join(pwaPath, "index.html")));
 app.get("/inspector/", (_, res) => res.sendFile(path.join(pwaPath, "index.html")));
+app.get("/", (_, res) => res.redirect("/inspector"));
 
 // ── Freemium ──────────────────────────────────────────────────────────────
 const FREE_DAILY_LIMIT = 10;
@@ -227,7 +228,7 @@ async function callGemini(messages: any[]): Promise<string> {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               contents: [{ role: "user", parts }],
-              generationConfig: { temperature: 0.2, maxOutputTokens: 512 },
+              generationConfig: { temperature: 0.2, maxOutputTokens: 512, response_mime_type: "application/json" },
             }),
             signal: AbortSignal.timeout(25_000),
           }
@@ -249,14 +250,14 @@ async function callGemini(messages: any[]): Promise<string> {
 }
 
 async function callLLM(messages: any[], requiresVision = false): Promise<{ text: string; provider: string; model: string }> {
+  // Gemini пръв — 27 ключа в pool, никога не лимитира. Groq и OpenRouter като fallback.
   let providers = [
-    { fn: callGroq,       name: "groq",       model: "llama-3.1-8b-instant" },
-    { fn: callOpenRouter, name: "openrouter",  model: "nemotron-3.5-lightning:free" },
     { fn: callGemini,     name: "gemini",      model: "gemini-flash-latest" },
+    { fn: callGroq,       name: "groq",        model: "llama-3.1-8b-instant" },
+    { fn: callOpenRouter, name: "openrouter",  model: "nemotron-3.5-lightning:free" },
   ];
 
   if (requiresVision) {
-    // Only Gemini is guaranteed to have vision in this setup right now
     providers = providers.filter(p => p.name === "gemini");
   }
 
@@ -490,18 +491,35 @@ app.post("/api/inspect", async (req, res) => {
       { role: "user",   content: userContent },
     ], requiresVision);
 
-    // Parse JSON
+    // Parse JSON — многостъпков издръжлив парсър
     let parsed: any = null;
-    try {
-      const clean = result.text.replace(/```json\n?/gi, "").replace(/```\n?/gi, "").trim();
-      const match = clean.match(/\{[\s\S]*\}/);
-      if (match) {
-        parsed = JSON.parse(match[0]);
-      } else {
-        throw new Error("No JSON found");
+    const rawText = result.text;
+    const clean = rawText.replace(/^```json\s*/gm, "").replace(/^```\s*/gm, "").trim();
+    console.log("[PARSE] raw length:", rawText.length, "| first 200:", JSON.stringify(rawText.slice(0, 200)));
+
+    // Стратегия 1: директен parse
+    try { parsed = JSON.parse(clean); console.log("[PARSE] S1 OK"); } catch (e: any) { console.log("[PARSE] S1 fail:", e.message); }
+
+    // Стратегия 2: indexOf/lastIndexOf
+    if (!parsed) {
+      const start = clean.indexOf("{");
+      const end   = clean.lastIndexOf("}");
+      console.log("[PARSE] S2 start:", start, "end:", end);
+      if (start !== -1 && end > start) {
+        try { parsed = JSON.parse(clean.slice(start, end + 1)); console.log("[PARSE] S2 OK"); }
+        catch (e: any) { console.log("[PARSE] S2 fail:", e.message, "| slice:", JSON.stringify(clean.slice(start, start + 100))); }
       }
-    } catch (_) {
-      parsed = { verdict: "unknown", confidence: 0, explanation: result.text.slice(0, 300), flags: [], suspicious_phrases: [] };
+    }
+
+    // Стратегия 3: Fallback — извличаме verdict от текста с думи
+    if (!parsed) {
+      const t = rawText.toLowerCase();
+      const verdict = t.includes("fake") || t.includes("фейк") ? "fake"
+                    : t.includes("real") || t.includes("реал") ? "real"
+                    : t.includes("suspicious") || t.includes("подозр") ? "suspicious"
+                    : "unknown";
+      parsed = { verdict, confidence: verdict !== "unknown" ? 60 : 0,
+        explanation: rawText.slice(0, 400), flags: [], suspicious_phrases: [] };
     }
     if (!parsed) parsed = {};
     if (!Array.isArray(parsed.suspicious_phrases)) parsed.suspicious_phrases = [];
