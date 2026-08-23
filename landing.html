@@ -1,1 +1,71 @@
-PLACEHOLDER
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JARVIS Inspector — Виж истината с един клик</title>
+  <meta name="description" content="Невидим AI слой върху всяка страница. Натисни бутона — разбери дали е фалшиво или истинско за секунди.">
+  <style>
+    :root { --bg:#05070f; --card:#0c1220; --border:rgba(255,255,255,0.08); --text:#e8eef7; --muted:#8b9bb4; --green:#10b981; --cyan:#06b6d4; --red:#f43f5e; }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+    a{color:inherit;text-decoration:none}
+    .container{max-width:1080px;margin:0 auto;padding:0 24px}
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:rgba(5,7,15,0.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+    .logo{font-weight:800;font-size:18px}
+    .nav-cta{background:linear-gradient(135deg,var(--green),var(--cyan));color:#fff;font-weight:700;font-size:14px;padding:10px 20px;border-radius:999px}
+    .hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 24px 80px}
+    .badge{display:inline-flex;align-items:center;gap:8px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:999px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--green);margin-bottom:28px}
+    .hero h1{font-size:clamp(2.4rem,6vw,4rem);font-weight:800;line-height:1.1;max-width:800px;margin-bottom:20px}
+    .hero h1 span{background:linear-gradient(135deg,var(--green),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .hero-sub{font-size:1.15rem;color:var(--muted);max-width:560px;margin:0 auto 40px}
+    .btn-primary{background:linear-gradient(135deg,var(--green),var(--cyan));color:#fff;font-weight:700;font-size:16px;padding:16px 32px;border-radius:999px;display:inline-block}
+    section{padding:80px 0}
+    .section-title{font-size:2rem;font-weight:800;text-align:center;margin-bottom:12px}
+    .section-sub{text-align:center;color:var(--muted);margin-bottom:48px}
+    .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px}
+    .step{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;text-align:center}
+    .step-num{width:48px;height:48px;border-radius:50%;margin:0 auto 16px;background:linear-gradient(135deg,var(--green),var(--cyan));display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff}
+    .pricing{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
+    .plan{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px;text-align:center}
+    .plan.popular{border-color:rgba(16,185,129,0.5)}
+    .price{font-size:2.2rem;font-weight:800;margin:12px 0}
+    footer{padding:40px 0;border-top:1px solid var(--border);text-align:center;font-size:13px;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">JARVIS Inspector</div>
+    <a href="/inspector" class="nav-cta">Отвори →</a>
+  </nav>
+  <section class="hero">
+    <div class="badge">AI детектор · 11 езика</div>
+    <h1>Един бутон.<br><span>Истината за секунди.</span></h1>
+    <p class="hero-sub">Инсталираш веднъж. На всяка страница мига бутон. Натискаш — и веднага виждаш дали е фалшиво или истинско.</p>
+    <a href="/inspector" class="btn-primary">Започни безплатно</a>
+  </section>
+  <section>
+    <div class="container">
+      <h2 class="section-title">Три стъпки</h2>
+      <p class="section-sub">Без регистрации. Без излишни бутони.</p>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><h3>Инсталирай</h3><p>Chrome или уеб версия. 30 сек.</p></div>
+        <div class="step"><div class="step-num">2</div><h3>Сърфирай</h3><p>Facebook, Instagram, новини — бутонът е там.</p></div>
+        <div class="step"><div class="step-num">3</div><h3>Натисни</h3><p>Един клик. Мгновенен вердикт.</p></div>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="container">
+      <h2 class="section-title">Цени</h2>
+      <div class="pricing">
+        <div class="plan"><h3>Free</h3><div class="price">€0</div><p>10 анализа/ден</p><a href="/inspector" class="btn-primary" style="margin-top:16px;font-size:14px;padding:10px 20px">Започни</a></div>
+        <div class="plan popular"><h3>PRO</h3><div class="price">€4.99</div><p>Неограничени + Social</p><a href="/inspector" class="btn-primary" style="margin-top:16px;font-size:14px;padding:10px 20px">Upgrade</a></div>
+        <div class="plan"><h3>Creator</h3><div class="price">€9.99</div><p>PRO + badge</p></div>
+        <div class="plan"><h3>Business</h3><div class="price">€49</div><p>API + 5 seats</p></div>
+      </div>
+    </div>
+  </section>
+  <footer><p>© 2026 JARVIS Inspector · Един бутон. Истината.</p></footer>
+</body>
+</html>
