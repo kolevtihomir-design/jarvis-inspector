@@ -1,10 +1,13 @@
 {
   "manifest_version": 3,
   "name": "JARVIS Inspector",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "description": "Реален/Фейк детектор — невидим слой върху всяка страница",
   "permissions": ["tabs", "activeTab", "scripting", "storage"],
-  "host_permissions": ["<all_urls>", "https://smartpause-inspector-api.vercel.app/*"],
+  "host_permissions": ["<all_urls>", "https://*.vercel.app/*"],
+  "action": {
+    "default_title": "JARVIS Inspector"
+  },
   "background": {
     "service_worker": "background.js"
   },
