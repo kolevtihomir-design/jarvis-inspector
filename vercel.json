@@ -1,1 +1,25 @@
-PLACEHOLDER
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "inspector-server.ts",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["inspector-pwa/**", "landing.html"]
+      }
+    }
+  ],
+  "routes": [
+    { "src": "/", "dest": "/landing.html" },
+    { "src": "/landing.html", "dest": "/landing.html" },
+    { "src": "/inspector/?", "dest": "/inspector-pwa/index.html" },
+    { "src": "/inspector/(.*)", "dest": "/inspector-pwa/$1" },
+    { "src": "/(.*)", "dest": "inspector-server.ts" }
+  ],
+  "functions": {
+    "inspector-server.ts": {
+      "maxDuration": 30,
+      "memory": 1024
+    }
+  }
+}
