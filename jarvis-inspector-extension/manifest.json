@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "JARVIS Inspector",
-  "version": "1.4.0",
-  "description": "Реален/Фейк детектор — невидим слой върху всяка страница",
+  "version": "2.0.0",
+  "description": "Един бутон. Истината за секунди. Натисни и виж дали е фалшиво или истинско.",
   "permissions": ["tabs", "activeTab", "scripting", "storage"],
   "host_permissions": ["<all_urls>", "https://*.vercel.app/*"],
   "action": {
@@ -25,13 +25,7 @@
         "default": "Alt+J",
         "mac": "Alt+J"
       },
-      "description": "Toggle Jarvis Inspector"
+      "description": "Toggle JARVIS Inspector"
     }
-  },
-  "web_accessible_resources": [
-    {
-      "resources": ["*.png", "*.svg"],
-      "matches": ["<all_urls>"]
-    }
-  ]
+  }
 }
